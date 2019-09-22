@@ -6,8 +6,10 @@ extern crate tera;
 extern crate log;
 
 extern crate pretty_env_logger;
+extern crate simple_error;
 
 use futures::{future, Future, Stream};
+use simple_error::SimpleError;
 use std::sync::{RwLock, Arc};
 use std::borrow::Cow;
 use std::collections::HashMap;
@@ -74,40 +76,67 @@ fn get_new() -> ResponseFuture {
     ))
 }
 
-fn get_argument_from_url(req: Request<Body>, arg: String) -> Result<String, Error> {
+fn get_argument_from_url(req: Request<Body>, arg: &str) -> Result<String, SimpleError> {
     let args = url::form_urlencoded::parse(&req.uri().query().unwrap().as_bytes())
         .into_owned()
         .collect::<HashMap<String, String>>();
-    
-    args[arg].clone()
+
+    match args.get(arg) {
+        Some(value) => Ok(value.clone()),
+        None => Err(SimpleError::new("Argument Not Found"))
+    }
 }
 
 fn get_complete(req: Request<Body>) -> ResponseFuture {
-    let mut ctx = Context::new();
-    ctx.insert("token", get_argument_from_url("token"));
-    
-    let body = Body::from(TERA.render("complete.html", &ctx).unwrap().to_string());
+    match get_argument_from_url(req, "token") {
+        Ok(token) => {
+            let mut ctx = Context::new();
+            ctx.insert("token", &token);
 
-    Box::new(future::ok(
-        Response::builder()
-            .body(body)
-            .unwrap(),
-    ))
+            let body = Body::from(TERA.render("complete.html", &ctx).unwrap().to_string());
+
+            Box::new(future::ok(
+                Response::builder()
+                    .body(body)
+                    .unwrap(),
+            ))
+        }
+        Err(error) => {
+            Box::new(future::ok(
+                Response::builder()
+                    .status(500)
+                    .body(Body::from("Internal Server Error"))
+                    .unwrap(),
+            ))
+        }
+    }
 }
 
 fn post_new(req: Request<Body>) -> ResponseFuture {
-    let short = Short::new(get_argument_from_url("target"));
-    let token = short.token.clone();
+    match get_argument_from_url(req, "token") {
+        Ok(token) => {
+            let short = Short::new(token);
+            let token = short.token.clone();
 
-    add_short(short);
+            add_short(short);
 
-    Box::new(future::ok(
-        Response::builder()
-            .status(StatusCode::MOVED_PERMANENTLY)
-            .header("Location", format!("/complete?token={}", token))
-            .body(Body::from(""))
-            .unwrap(),
-    ))
+            Box::new(future::ok(
+                Response::builder()
+                    .status(StatusCode::MOVED_PERMANENTLY)
+                    .header("Location", format!("/complete?token={}", token))
+                    .body(Body::from(""))
+                    .unwrap(),
+            ))
+        }
+        Err(error) => {
+            Box::new(future::ok(
+                Response::builder()
+                    .status(500)
+                    .body(Body::from("Internal Server Error"))
+                    .unwrap(),
+            ))
+        }
+    }
 }
 
 fn generate_token(n: usize) -> String {
