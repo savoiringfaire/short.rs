@@ -23,8 +23,6 @@ use tera::{Context, Tera};
 type GenericError = Box<dyn std::error::Error + Send + Sync>;
 type ResponseFuture = Box<Future<Item = Response<Body>, Error = GenericError> + Send>;
 
-
-
 lazy_static! {
     pub static ref TERA: Tera = compile_templates!("templates/**/*");
     pub static ref SHORTS: Shorts = Arc::new(RwLock::new(Vec::new()));
@@ -76,13 +74,18 @@ fn get_new() -> ResponseFuture {
     ))
 }
 
-fn get_complete(req: Request<Body>) -> ResponseFuture {
+fn get_argument_from_url(req: Request<Body>, arg: String) -> Result<String, Error> {
     let args = url::form_urlencoded::parse(&req.uri().query().unwrap().as_bytes())
         .into_owned()
         .collect::<HashMap<String, String>>();
+    
+    args[arg].clone()
+}
 
+fn get_complete(req: Request<Body>) -> ResponseFuture {
     let mut ctx = Context::new();
-    ctx.insert("token", &args["token"].clone());
+    ctx.insert("token", get_argument_from_url("token"));
+    
     let body = Body::from(TERA.render("complete.html", &ctx).unwrap().to_string());
 
     Box::new(future::ok(
@@ -93,11 +96,7 @@ fn get_complete(req: Request<Body>) -> ResponseFuture {
 }
 
 fn post_new(req: Request<Body>) -> ResponseFuture {
-    let args = url::form_urlencoded::parse(&req.uri().query().unwrap().as_bytes())
-        .into_owned()
-        .collect::<HashMap<String, String>>();
-
-    let short = Short::new(args["target"].clone());
+    let short = Short::new(get_argument_from_url("target"));
     let token = short.token.clone();
 
     add_short(short);
