@@ -117,6 +117,19 @@ fn generate_token(n: usize) -> String {
         .collect()
 }
 
+/// Handle a request that does't match other requests (and therefore should be a redirect request).
+fn get_redirect(req: Request<Body>) -> ResponseFuture {
+    Box::new(future::ok(
+        Response::builder()
+            .status(StatusCode::MOVED_PERMANENTLY)
+            .header("Location", format!("{}", get_target(
+                req.uri().path()[1..].to_string()))
+            )
+            .body(Body::from(""))
+            .unwrap(),
+    ))
+}
+
 fn router(req: Request<Body>, _client: &Client<HttpConnector>) -> ResponseFuture {
     match (req.method(), req.uri().path()) {
         (&Method::GET, "/") => {
@@ -129,15 +142,7 @@ fn router(req: Request<Body>, _client: &Client<HttpConnector>) -> ResponseFuture
             get_complete(req)
         }
         _ => {
-            Box::new(future::ok(
-                Response::builder()
-                    .status(StatusCode::MOVED_PERMANENTLY)
-                    .header("Location", format!("{}", get_target(
-                        req.uri().path()[1..].to_string()))
-                    )
-                    .body(Body::from(""))
-                    .unwrap(),
-            ))
+            get_redirect(req)
         }
     }
 }
