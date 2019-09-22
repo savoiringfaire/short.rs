@@ -76,7 +76,7 @@ fn get_argument_from_url(req: Request<Body>, arg: &str) -> Result<String, Simple
 
 fn get_complete(req: Request<Body>) -> Result<ResponseFuture, Box<dyn Error>> {
     let token = get_argument_from_url(req, "token")?;
-    
+
     let mut ctx = Context::new();
     ctx.insert("token", &token);
 
@@ -122,6 +122,7 @@ fn respond_handle_error(result: Result<ResponseFuture, Box<dyn Error>>) -> Respo
     match result {
         Ok(response) => response,
         Err(error) => {
+            error!("{}", error);
             Box::new(future::ok(
                 Response::builder()
                     .status(500)
