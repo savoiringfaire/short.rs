@@ -74,30 +74,19 @@ fn get_argument_from_url(req: Request<Body>, arg: &str) -> Result<String, Simple
     }
 }
 
-fn get_complete(req: Request<Body>) -> ResponseFuture {
-    match get_argument_from_url(req, "token") {
-        Ok(token) => {
-            let mut ctx = Context::new();
-            ctx.insert("token", &token);
+fn get_complete(req: Request<Body>) -> Result<ResponseFuture, Box<dyn Error>> {
+    let token = get_argument_from_url(req, "token")?;
+    
+    let mut ctx = Context::new();
+    ctx.insert("token", &token);
 
-            let body = Body::from(TERA.render("complete.html", &ctx).unwrap().to_string());
+    let body = Body::from(TERA.render("complete.html", &ctx)?.to_string());
 
-            Box::new(future::ok(
-                Response::builder()
-                    .body(body)
-                    .unwrap(),
-            ))
-        }
-        Err(error) => {
-            error!("Error getting complete: {}", error);
-            Box::new(future::ok(
-                Response::builder()
-                    .status(500)
-                    .body(Body::from("Internal Server Error"))
-                    .unwrap(),
-            ))
-        }
-    }
+    Ok(Box::new(future::ok(
+        Response::builder()
+            .body(body)
+            .unwrap(),
+    )))
 }
 
 fn post_new(req: Request<Body>) -> Result<ResponseFuture, Box<dyn Error>> {
