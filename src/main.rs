@@ -8,7 +8,11 @@ extern crate log;
 extern crate pretty_env_logger;
 extern crate simple_error;
 
+pub mod short;
+
+use short::Short;
 use futures::{future, Future};
+use std::error::Error;
 use simple_error::SimpleError;
 use std::sync::{RwLock, Arc};
 use std::collections::HashMap;
@@ -23,26 +27,13 @@ use tera::{Context, Tera};
 type GenericError = Box<dyn std::error::Error + Send + Sync>;
 type ResponseFuture = Box<dyn Future<Item = Response<Body>, Error = GenericError> + Send>;
 
+
 lazy_static! {
     pub static ref TERA: Tera = compile_templates!("templates/**/*");
     pub static ref SHORTS: Shorts = Arc::new(RwLock::new(Vec::new()));
 }
 
-pub struct Short {
-    token: String,
-    target: String
-}
-
 type Shorts = Arc<RwLock<Vec<Short>>>;
-
-impl Short {
-    fn new(target: String) -> Self {
-        Self {
-            token: generate_token(10),
-            target: target
-        }
-    }
-}
 
 fn add_short(t: Short) {
     let shorts = Arc::clone(&SHORTS);
@@ -111,39 +102,20 @@ fn get_complete(req: Request<Body>) -> ResponseFuture {
     }
 }
 
-fn post_new(req: Request<Body>) -> ResponseFuture {
-    match get_argument_from_url(req, "target") {
-        Ok(target) => {
-            let short = Short::new(target);
-            let token = short.token.clone();
+fn post_new(req: Request<Body>) -> Result<ResponseFuture, Box<Error>> {
+    let target = get_argument_from_url(req, "target")?;
+    let short = Short::new(target)?;
+    let token = short.token.clone();
 
-            add_short(short);
+    add_short(short);
 
-            Box::new(future::ok(
-                Response::builder()
-                    .status(StatusCode::MOVED_PERMANENTLY)
-                    .header("Location", format!("/complete?token={}", token))
-                    .body(Body::from(""))
-                    .unwrap(),
-            ))
-        }
-        Err(error) => {
-            error!("Error adding new: {}", error);
-            Box::new(future::ok(
-                Response::builder()
-                    .status(500)
-                    .body(Body::from("Internal Server Error"))
-                    .unwrap(),
-            ))
-        }
-    }
-}
-
-fn generate_token(n: usize) -> String {
-    thread_rng()
-        .sample_iter(&Alphanumeric)
-        .take(n)
-        .collect()
+    Ok(Box::new(future::ok(
+        Response::builder()
+            .status(StatusCode::MOVED_PERMANENTLY)
+            .header("Location", format!("/complete?token={}", token))
+            .body(Body::from(""))
+            .unwrap(),
+    )))
 }
 
 /// Handle a request that does't match other requests (and therefore should be a redirect request).
@@ -159,13 +131,29 @@ fn get_redirect(req: Request<Body>) -> ResponseFuture {
     ))
 }
 
+fn respond_handle_error(result: Result<ResponseFuture, Box<Error>>) -> ResponseFuture {
+    match result {
+        Ok(response) => response,
+        Err(error) => {
+            Box::new(future::ok(
+                Response::builder()
+                    .status(500)
+                    .body(Body::from(
+                        format!("Internal Server Error: {}", error)
+                    ))
+                    .unwrap(),
+            ))
+        }
+    }
+}
+
 fn router(req: Request<Body>, _client: &Client<HttpConnector>) -> ResponseFuture {
     match (req.method(), req.uri().path()) {
         (&Method::GET, "/") => {
             get_new()
         }
         (&Method::GET, "/new") => {
-            post_new(req)
+            respond_handle_error(post_new(req))
         }
         (&Method::GET, "/complete") => {
             get_complete(req)
