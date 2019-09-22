@@ -1,5 +1,4 @@
 use http::uri::Uri;
-use http::uri;
 use std::error::Error;
 use std::fmt;
 use rand::{thread_rng, Rng};
@@ -41,21 +40,21 @@ pub struct Short {
 }
 
 impl Short {
-    pub fn new(target: String) -> Result<Self, Box<Error>> {
+    pub fn new(target: String) -> Result<Self, Box<dyn Error>> {
         Ok(Self{
             token: Self::generate_token(10),
             target: Self::process_target(target)?
         })
     }
 
-    fn process_target(target: String) -> Result<String, Box<Error>> {
-        let mut uri = target.parse::<uri::Uri>()?;
+    fn process_target(target: String) -> Result<String, Box<dyn Error>> {
+        let uri = target.parse::<Uri>()?;
 
         if uri.host().is_none() {
             return Err(Box::new(NoHostError{}));
         }
 
-        if uri.scheme().is_none() {
+        if uri.scheme_part().is_none() {
             return Err(Box::new(NoSchemeError{}));
         }
 

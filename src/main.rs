@@ -20,8 +20,6 @@ use hyper::{
     client::HttpConnector, rt, service::service_fn, Body, Client, Request,
     Response, Server, Method, StatusCode
 };
-use rand::{thread_rng, Rng};
-use rand::distributions::Alphanumeric;
 use tera::{Context, Tera};
 
 type GenericError = Box<dyn std::error::Error + Send + Sync>;
@@ -102,7 +100,7 @@ fn get_complete(req: Request<Body>) -> ResponseFuture {
     }
 }
 
-fn post_new(req: Request<Body>) -> Result<ResponseFuture, Box<Error>> {
+fn post_new(req: Request<Body>) -> Result<ResponseFuture, Box<dyn Error>> {
     let target = get_argument_from_url(req, "target")?;
     let short = Short::new(target)?;
     let token = short.token.clone();
@@ -131,7 +129,7 @@ fn get_redirect(req: Request<Body>) -> ResponseFuture {
     ))
 }
 
-fn respond_handle_error(result: Result<ResponseFuture, Box<Error>>) -> ResponseFuture {
+fn respond_handle_error(result: Result<ResponseFuture, Box<dyn Error>>) -> ResponseFuture {
     match result {
         Ok(response) => response,
         Err(error) => {
