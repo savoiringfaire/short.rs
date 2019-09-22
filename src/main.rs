@@ -118,19 +118,23 @@ fn get_redirect(req: Request<Body>) -> ResponseFuture {
     ))
 }
 
+fn render_error_page(error: Box<dyn Error>) -> ResponseFuture {
+    Box::new(future::ok(
+        Response::builder()
+            .status(500)
+            .body(Body::from(
+                format!("Internal Server Error: {}", error)
+            ))
+            .unwrap(),
+    ))
+}
+
 fn respond_handle_error(result: Result<ResponseFuture, Box<dyn Error>>) -> ResponseFuture {
     match result {
         Ok(response) => response,
         Err(error) => {
             error!("{}", error);
-            Box::new(future::ok(
-                Response::builder()
-                    .status(500)
-                    .body(Body::from(
-                        format!("Internal Server Error: {}", error)
-                    ))
-                    .unwrap(),
-            ))
+            render_error_page(error)
         }
     }
 }
