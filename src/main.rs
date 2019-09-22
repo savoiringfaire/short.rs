@@ -143,7 +143,7 @@ fn router(req: Request<Body>, _client: &Client<HttpConnector>) -> ResponseFuture
             respond_handle_error(post_new(req))
         }
         (&Method::GET, "/complete") => {
-            get_complete(req)
+            respond_handle_error(get_complete(req))
         }
         _ => {
             get_redirect(req)
