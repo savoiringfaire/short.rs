@@ -8,12 +8,10 @@ extern crate log;
 extern crate pretty_env_logger;
 extern crate simple_error;
 
-use futures::{future, Future, Stream};
+use futures::{future, Future};
 use simple_error::SimpleError;
 use std::sync::{RwLock, Arc};
-use std::borrow::Cow;
 use std::collections::HashMap;
-use url::{Url, ParseError};
 use hyper::{
     client::HttpConnector, rt, service::service_fn, Body, Client, Request,
     Response, Server, Method, StatusCode
@@ -23,7 +21,7 @@ use rand::distributions::Alphanumeric;
 use tera::{Context, Tera};
 
 type GenericError = Box<dyn std::error::Error + Send + Sync>;
-type ResponseFuture = Box<Future<Item = Response<Body>, Error = GenericError> + Send>;
+type ResponseFuture = Box<dyn Future<Item = Response<Body>, Error = GenericError> + Send>;
 
 lazy_static! {
     pub static ref TERA: Tera = compile_templates!("templates/**/*");
@@ -66,7 +64,7 @@ fn get_target(token: String) -> String {
 }
 
 fn get_new() -> ResponseFuture {
-    let mut ctx = Context::new();
+    let ctx = Context::new();
     let body = Body::from(TERA.render("index.html", &ctx).unwrap().to_string());
 
     Box::new(future::ok(
@@ -102,6 +100,7 @@ fn get_complete(req: Request<Body>) -> ResponseFuture {
             ))
         }
         Err(error) => {
+            error!("Error getting complete: {}", error);
             Box::new(future::ok(
                 Response::builder()
                     .status(500)
@@ -113,9 +112,9 @@ fn get_complete(req: Request<Body>) -> ResponseFuture {
 }
 
 fn post_new(req: Request<Body>) -> ResponseFuture {
-    match get_argument_from_url(req, "token") {
-        Ok(token) => {
-            let short = Short::new(token);
+    match get_argument_from_url(req, "target") {
+        Ok(target) => {
+            let short = Short::new(target);
             let token = short.token.clone();
 
             add_short(short);
@@ -129,6 +128,7 @@ fn post_new(req: Request<Body>) -> ResponseFuture {
             ))
         }
         Err(error) => {
+            error!("Error adding new: {}", error);
             Box::new(future::ok(
                 Response::builder()
                     .status(500)
