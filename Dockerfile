@@ -1,4 +1,4 @@
-FROM rust
+FROM ekidd/rust-musl-builder
 
 COPY ./ ./
 
