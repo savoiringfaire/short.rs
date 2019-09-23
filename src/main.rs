@@ -153,13 +153,12 @@ fn router(req: Request<Body>, _client: &Client<HttpConnector>, redis_client: &Ar
 fn main() {
     pretty_env_logger::init();
 
-    let addr = "127.0.0.1:3000".parse().unwrap();
-
     rt::run(future::lazy(move || {
         // create a Client for all Services
         let client = Client::new();
 
         let connection_string: &str = &env::var("REDIS_CONNECTION_STRING").unwrap();
+        let addr = env::var("LISTEN_ADDRESS").unwrap().parse().unwrap();
 
         let redis_client = Arc::new(
             redis::Client::open(

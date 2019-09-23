@@ -12,4 +12,8 @@ COPY --from=build \
     /home/rust/src/target/x86_64-unknown-linux-musl/release/shortner \
     /shortner
 
+COPY --from=build \
+    /home/rust/src/templates/* \
+    /templates/
+
 CMD ["/shortner"]
