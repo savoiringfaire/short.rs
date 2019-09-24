@@ -81,6 +81,7 @@ docker run -p 80:80 -e LISTEN_ADDRESS="0.0.0.0:80" -e REDIS_CONNECTION_STRING="r
 ## Roadmap
 
 - Support redis clusters.
+- Style the pages a little better.
 
 See the [open issues](https://github.com/savoiringfaire/short.rs/issues) for a full list of proposed features (and known issues).
 
