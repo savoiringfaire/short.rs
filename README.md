@@ -9,7 +9,7 @@
 <br />
 <p align="center">
   <a href="https://github.com/savoiringfaire/short.rs">
-    <img src="images/logo.png" alt="Logo" width="80" height="80">
+    <img src="img/logo.png" alt="Logo" width="80" height="80">
   </a>
 
   <h3 align="center">Short.rs</h3>
