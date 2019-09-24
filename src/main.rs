@@ -9,14 +9,14 @@ extern crate pretty_env_logger;
 extern crate simple_error;
 
 pub mod short;
+pub mod shortdb;
 
 use short::Short;
 use futures::{future, Future};
 use std::env;
-use redis::Commands;
 use std::error::Error;
 use simple_error::SimpleError;
-use std::sync::{RwLock, Arc};
+use std::sync::Arc;
 use std::collections::HashMap;
 use hyper::{
     client::HttpConnector, rt, service::service_fn, Body, Client, Request,
@@ -30,18 +30,6 @@ type ResponseFuture = Box<dyn Future<Item = Response<Body>, Error = GenericError
 
 lazy_static! {
     pub static ref TERA: Tera = compile_templates!("templates/**/*");
-    pub static ref SHORTS: Shorts = Arc::new(RwLock::new(Vec::new()));
-}
-
-type Shorts = Arc<RwLock<Vec<Short>>>;
-
-fn add_short(t: Short, con: &mut redis::Connection) -> redis::RedisResult<()> {
-    let _ : () = con.set(t.token, t.target)?;
-    Ok(())
-}
-
-fn get_target(token: String, con: &mut redis::Connection) -> redis::RedisResult<String> {
-    con.get(token)
 }
 
 fn get_new() -> ResponseFuture {
@@ -87,7 +75,7 @@ fn post_new(req: Request<Body>, redis_client: &Arc<redis::Client>) -> Result<Res
     let short = Short::new(target)?;
     let token = short.token.clone();
 
-    add_short(short, &mut con)?;
+    shortdb::add_short(short, &mut con)?;
 
     Ok(Box::new(future::ok(
         Response::builder()
@@ -104,9 +92,12 @@ fn get_redirect(req: Request<Body>, redis_client: &Arc<redis::Client>) -> Result
     Ok(Box::new(future::ok(
         Response::builder()
             .status(StatusCode::MOVED_PERMANENTLY)
-            .header("Location", format!("{}", get_target(
-                req.uri().path()[1..].to_string(), &mut con)?)
-            )
+            .header("Location", format!(
+                "{}",
+                shortdb::get_short(
+                    &req.uri().path()[1..], &mut con
+                )?.target
+            ))
             .body(Body::from(""))
             .unwrap(),
     )))
