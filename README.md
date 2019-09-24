@@ -104,6 +104,6 @@ Distributed under the MIT License. See `LICENSE` for more information.
 <!-- CONTACT -->
 ## Contact
 
-Your Name - [@savoiringfaire](https://twitter.com/savoiringfaire) - contact@hhra.uk
+Savoiringfaire - [@savoiringfaire](https://twitter.com/savoiringfaire) - contact@hhra.uk
 
-Project Link: [https://github.com/savoiringfaire/short.rs](https://github.com/savoiringfaire/short.rs
+Project Link: [https://github.com/savoiringfaire/short.rs](https://github.com/savoiringfaire/short.rs)
