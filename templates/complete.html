@@ -5,12 +5,18 @@
         <link href="https://fonts.googleapis.com/css?family=Big+Shoulders+Display&display=swap" rel="stylesheet">
         <style>
             .container {
-                margin: auto;
+                margin: 0;
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                -ms-transform: translate(-50%, -50%);
+                transform: translate(-50%, -50%);
                 width: 900px;
-                background-color: #d4c1ec;
+                background-color: #267452;
                 padding: 30px;
                 font-family: 'Big Shoulders Display', cursive;
                 text-align: center;
+                color: #FDDA69;
             }
 
             #complete {
@@ -23,7 +29,7 @@
             a:visited,
             a:hover,
             a:active {
-                color: #736ced;
+                color: #FDDA69;
                 text-decoration: none;
             }
 
@@ -36,7 +42,7 @@
     </head>
     <body>
       <div class="container">
-        <h1>Shortened URL</h1>
+        <h1>SHORT.RS</h1>
         <a href="/{{ token }}" id="complete">https://s.hhra.uk/{{ token }}</a>
       </div>
     </body>
