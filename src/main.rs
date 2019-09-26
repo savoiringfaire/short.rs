@@ -14,6 +14,8 @@ pub mod shortdb;
 use short::Short;
 use futures::{future, Future};
 use std::env;
+use std::path::Path;
+use std::fs;
 use std::error::Error;
 use simple_error::SimpleError;
 use std::sync::Arc;
@@ -27,10 +29,12 @@ use tera::{Context, Tera};
 type GenericError = Box<dyn std::error::Error + Send + Sync>;
 type ResponseFuture = Box<dyn Future<Item = Response<Body>, Error = GenericError> + Send>;
 
-
 lazy_static! {
     pub static ref TERA: Tera = compile_templates!("templates/**/*");
 }
+
+static STATIC_ASSET_PATH: &str = "/static/assets";
+static STATIC_ASSET_FILESYSTEM_ROOT: &str = "static/assets";
 
 fn get_new() -> ResponseFuture {
     let ctx = Context::new();
@@ -124,6 +128,63 @@ fn respond_handle_error(result: Result<ResponseFuture, Box<dyn Error>>) -> Respo
     }
 }
 
+fn get_static(req: Request<Body>) -> Result<ResponseFuture, Box<dyn Error>> {
+    let relative_asset_path = &req.uri().path()[STATIC_ASSET_PATH.len()..];
+    trace!("Loading asset located at relative path: {}", relative_asset_path);
+
+    let asset_filesystem_path: String = format!(
+        "{}/{}",
+        STATIC_ASSET_FILESYSTEM_ROOT,
+        relative_asset_path
+    );
+    trace!("Computed non-canonicalized filesystem path: {}", asset_filesystem_path);
+
+    let asset_canonicalized_path = fs::canonicalize(asset_filesystem_path)?;
+    trace!("Canonicalized filesystem path: {}", asset_canonicalized_path.to_str().unwrap());
+
+    let pwd = env::current_dir()?;
+
+    let absolute_begins_with_path = format!("{}/{}", pwd.to_str().unwrap(), STATIC_ASSET_FILESYSTEM_ROOT);
+
+    if(
+        !asset_canonicalized_path
+            .to_str()
+            .unwrap()
+            .starts_with(&absolute_begins_with_path)
+    ) {
+        // Looks like someone tried path traversal.
+        // just return a 404 and forget about it.
+        return Ok(Box::new(future::ok(
+            Response::builder()
+                .status(404)
+                .body(Body::from(
+                    format!("404 - Not Found")
+                ))
+                .unwrap(),
+        )));
+    }
+
+    if(!Path::new(asset_canonicalized_path.to_str().unwrap()).exists()) {
+        return Ok(Box::new(future::ok(
+            Response::builder()
+                .status(404)
+                .body(Body::from(
+                    format!("404 - Not Found")
+                ))
+                .unwrap(),
+        )));
+    }
+
+    Ok(Box::new(future::ok(
+        Response::builder()
+            .status(404)
+            .body(Body::from(
+                format!("404 - Not Found")
+            ))
+            .unwrap(),
+    )))
+}
+
 fn router(req: Request<Body>, _client: &Client<HttpConnector>, redis_client: &Arc<redis::Client>) -> ResponseFuture {
     match (req.method(), req.uri().path()) {
         (&Method::GET, "/") => {
@@ -136,7 +197,14 @@ fn router(req: Request<Body>, _client: &Client<HttpConnector>, redis_client: &Ar
             respond_handle_error(get_complete(req))
         }
         _ => {
-            respond_handle_error(get_redirect(req, redis_client))
+            // I'd like to find a better way to handle this,
+            // it feels wrong (or at least too indented) in the catchall
+            // match arm.
+            if(req.uri().path().starts_with(STATIC_ASSET_PATH)) {
+                respond_handle_error(get_static(req))
+            } else {
+                respond_handle_error(get_redirect(req, redis_client))
+            }
         }
     }
 }
