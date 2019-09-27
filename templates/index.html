@@ -5,12 +5,13 @@
         <link href="https://fonts.googleapis.com/css?family=Big+Shoulders+Display&display=swap" rel="stylesheet">
         <style>
         * {
-          box-sizing: border-box;
-        }
+    box-sizing: border-box;
+   }
         
             body {
               background-color: #7FA5BF;
             }
+            
             .container {
                 margin: 0;
                 position: absolute;
@@ -24,12 +25,14 @@
                 font-family: 'Big Shoulders Display', cursive;
                 color: #FFFFFF;
             }
+            
             .container h1 {
                 width: 100%;
                 text-align: center;
-                font-weight: bold;
+                font-weight: normal;
                 font-size: 60px;
             }
+            
             .container input {
                 -webkit-box-sizing: border-box; /* Safari/Chrome, other WebKit */
                 -moz-box-sizing: border-box;    /* Firefox, other Gecko */
@@ -43,16 +46,19 @@
                 border-width: 1px;
                 border-color: #FFFFFF;
                 border-style: solid;
-                color: #B8C982;
+                color: #FFFFFF;
             }
+            
         </style>
     </head>
+    
+    
     <body>
-      <div class="container">
-        <h1>SHORT.RS</h1>
+     <div class="container">
+       <h1>URL Shortener</h1>
         <form method="GET" action="/new">
-            <input type="text" name="target" placeholder="Paste URL here"  autofocus/>
-            <input type="submit" value="Shorten"/>
+         <input type="text" name="target" placeholder="Paste URL here!"  autofocus/>
+         <input type="submit" value="Submit"/>
         </form>
       </div>
     </body>
