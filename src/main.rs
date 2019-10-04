@@ -175,14 +175,17 @@ fn get_static(req: Request<Body>) -> Result<ResponseFuture, Box<dyn Error>> {
         )));
     }
 
-    Ok(Box::new(future::ok(
-        Response::builder()
-            .status(404)
-            .body(Body::from(
-                format!("404 - Not Found")
-            ))
-            .unwrap(),
-    )))
+    let content = fs::read_to_string(asset_canonicalized_path)?;
+
+    return Ok(
+        Box::new(
+            future::ok(
+                Response::builder()
+                    .body(Body::from(content))
+                    .unwrap(),
+            )
+        )
+    );
 }
 
 fn router(req: Request<Body>, _client: &Client<HttpConnector>, redis_client: &Arc<redis::Client>) -> ResponseFuture {
