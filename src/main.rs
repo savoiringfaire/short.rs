@@ -28,6 +28,7 @@ use tera::{Context, Tera};
 
 type GenericError = Box<dyn std::error::Error + Send + Sync>;
 type ResponseFuture = Box<dyn Future<Item = Response<Body>, Error = GenericError> + Send>;
+type ResponseError = Result<ResponseFuture, Box<dyn Error>>;
 
 lazy_static! {
     pub static ref TERA: Tera = compile_templates!("templates/**/*");
@@ -58,7 +59,7 @@ fn get_argument_from_url(req: Request<Body>, arg: &str) -> Result<String, Simple
     }
 }
 
-fn get_complete(req: Request<Body>) -> Result<ResponseFuture, Box<dyn Error>> {
+fn get_complete(req: Request<Body>) -> ResponseError {
     let token = get_argument_from_url(req, "token")?;
 
     let mut ctx = Context::new();
@@ -73,7 +74,7 @@ fn get_complete(req: Request<Body>) -> Result<ResponseFuture, Box<dyn Error>> {
     )))
 }
 
-fn post_new(req: Request<Body>, redis_client: &Arc<redis::Client>) -> Result<ResponseFuture, Box<dyn Error>> {
+fn post_new(req: Request<Body>, redis_client: &Arc<redis::Client>) -> ResponseError {
     let mut con = redis_client.get_connection()?;
     let target = get_argument_from_url(req, "target")?;
     let short = Short::new(target)?;
@@ -91,7 +92,7 @@ fn post_new(req: Request<Body>, redis_client: &Arc<redis::Client>) -> Result<Res
 }
 
 /// Handle a request that does't match other requests (and therefore should be a redirect request).
-fn get_redirect(req: Request<Body>, redis_client: &Arc<redis::Client>) -> Result<ResponseFuture, Box<dyn Error>> {
+fn get_redirect(req: Request<Body>, redis_client: &Arc<redis::Client>) -> ResponseError {
     let mut con = redis_client.get_connection()?;
     Ok(Box::new(future::ok(
         Response::builder()
@@ -118,7 +119,7 @@ fn render_error_page(error: Box<dyn Error>) -> ResponseFuture {
     ))
 }
 
-fn respond_handle_error(result: Result<ResponseFuture, Box<dyn Error>>) -> ResponseFuture {
+fn respond_handle_error(result: ResponseError) -> ResponseFuture {
     match result {
         Ok(response) => response,
         Err(error) => {
@@ -128,7 +129,7 @@ fn respond_handle_error(result: Result<ResponseFuture, Box<dyn Error>>) -> Respo
     }
 }
 
-fn get_static(req: Request<Body>) -> Result<ResponseFuture, Box<dyn Error>> {
+fn get_static(req: Request<Body>) -> ResponseError {
     let relative_asset_path = &req.uri().path()[STATIC_ASSET_PATH.len()..];
     trace!("Loading asset located at relative path: {}", relative_asset_path);
 
