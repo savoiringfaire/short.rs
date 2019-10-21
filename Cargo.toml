@@ -24,4 +24,4 @@ redis = "0.12"
 
 [dependencies.uuid]
 features = ["serde", "v4"]
-version = "0.7"
+version = "0.8"
