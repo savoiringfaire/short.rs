@@ -4,9 +4,16 @@
         <title>short.rs</title>
         <link href="https://fonts.googleapis.com/css?family=Big+Shoulders+Display&display=swap" rel="stylesheet">
         <style>
-            body {
-              background-color: #B8C982;
+            * {
+                -webkit-box-sizing: border-box; /* Safari/Chrome, other WebKit */
+                -moz-box-sizing: border-box;    /* Firefox, other Gecko */
+                box-sizing: border-box;         /* Opera/IE 8+ */
             }
+        
+            body {
+              background-color: #7FA5BF;
+            }
+            
             .container {
                 margin: 0;
                 position: absolute;
@@ -14,41 +21,42 @@
                 left: 50%;
                 -ms-transform: translate(-50%, -50%);
                 transform: translate(-50%, -50%);
-                width: 900px;
-                background-color: #267452;
-                padding: 30px;
+                width: 700px;
+                background-color: #336487;
+                padding: 35px;
                 font-family: 'Big Shoulders Display', cursive;
-                color: #FDDA69;
+                color: #FFFFFF;
             }
+            
             .container h1 {
                 width: 100%;
                 text-align: center;
-                font-weight: bold;
+                font-weight: normal;
                 font-size: 60px;
             }
+            
             .container input {
-                -webkit-box-sizing: border-box; /* Safari/Chrome, other WebKit */
-                -moz-box-sizing: border-box;    /* Firefox, other Gecko */
-                box-sizing: border-box;         /* Opera/IE 8+ */
                 width: 100%;
                 padding: 20px;
                 margin-bottom: 10px;
                 text-align: center;
                 font-size: 20px;
-                background-color: #0B251A;
+                background-color: #085656;
                 border-width: 1px;
-                border-color: #FDDA69;
+                border-color: #FFFFFF;
                 border-style: solid;
-                color: #B8C982;
+                color: #FFFFFF;
             }
         </style>
     </head>
+    
+    
     <body>
-      <div class="container">
-        <h1>SHORT.RS</h1>
+     <div class="container">
+       <h1>URL Shortener</h1>
         <form method="GET" action="/new">
-            <input type="text" name="target" autofocus/>
-            <input type="submit" value="Submit"/>
+         <input type="text" name="target" placeholder="Paste URL here!"  autofocus/>
+         <input type="submit" value="Submit"/>
         </form>
       </div>
     </body>
