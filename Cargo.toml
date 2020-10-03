@@ -19,7 +19,7 @@ rand = "0.7"
 formdata = "0.12"
 url = "2.1"
 simple-error = "0.2"
-http = "0.1"
+http = "0.2"
 redis = "0.15"
 
 [dependencies.uuid]
