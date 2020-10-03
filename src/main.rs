@@ -147,12 +147,11 @@ fn get_static(req: Request<Body>) -> ResponseError {
 
     let absolute_begins_with_path = format!("{}/{}", pwd.to_str().unwrap(), STATIC_ASSET_FILESYSTEM_ROOT);
 
-    if(
-        !asset_canonicalized_path
-            .to_str()
-            .unwrap()
-            .starts_with(&absolute_begins_with_path)
-    ) {
+    if !asset_canonicalized_path
+        .to_str()
+        .unwrap()
+        .starts_with(&absolute_begins_with_path)
+    {
         // Looks like someone tried path traversal.
         // just return a 404 and forget about it.
         return Ok(Box::new(future::ok(
