@@ -54,7 +54,7 @@ impl Short {
             return Err(Box::new(NoHostError{}));
         }
 
-        if uri.scheme_part().is_none() {
+        if uri.scheme().is_none() {
             return Err(Box::new(NoSchemeError{}));
         }
 
