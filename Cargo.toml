@@ -20,8 +20,8 @@ formdata = "0.12"
 url = "2.1"
 simple-error = "0.2"
 http = "0.1"
-redis = "0.12"
+redis = "0.15"
 
 [dependencies.uuid]
 features = ["serde", "v4"]
-version = "0.7"
+version = "0.8"
